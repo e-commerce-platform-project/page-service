@@ -1,0 +1,14 @@
+services:
+  page-service:
+    container_name: Page-Service
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8181:8181"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8181/actuator/health" ]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s
