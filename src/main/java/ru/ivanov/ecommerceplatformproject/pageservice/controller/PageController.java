@@ -5,12 +5,12 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 @Controller
-@RequestMapping("/shop")
+@RequestMapping
 public class PageController {
 
-    @GetMapping
+    @GetMapping("/shop")
     public String shopPage() {
-        return "forward:/index_withVerificationCode1.0.html";
+        return "forward:/index_multiPage2.html";
     }
 
     @GetMapping("/seller")
