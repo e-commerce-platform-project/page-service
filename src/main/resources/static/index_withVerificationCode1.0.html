@@ -1261,6 +1261,145 @@
             color: #555;
         }
 
+        /* Стили для модального окна верификации */
+        .verification-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            z-index: 1000;
+        }
+
+        .verification-modal-content {
+            background-color: white;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            max-width: 450px;
+            width: 90%;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            animation: centeredModalFadeIn 0.3s ease-out;
+        }
+
+        .verification-modal-header {
+            padding: 22px;
+            background: linear-gradient(135deg, #ffa726, #ff9800);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .verification-modal-title {
+            font-size: 1.6em;
+            font-weight: bold;
+        }
+
+        .verification-close-modal {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.8em;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .verification-close-modal:hover {
+            transform: scale(1.1);
+        }
+
+        .verification-modal-body {
+            padding: 35px;
+        }
+
+        .verification-info {
+            text-align: center;
+            margin-bottom: 25px;
+            color: #555;
+        }
+
+        .verification-code-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+
+        .verification-code-input {
+            width: 45px;
+            height: 55px;
+            text-align: center;
+            font-size: 1.5em;
+            font-weight: bold;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        .verification-code-input:focus {
+            border-color: #4285f4;
+            box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.2);
+            outline: none;
+        }
+
+        .verification-code-input.filled {
+            border-color: #4285f4;
+            background-color: #f0f7ff;
+        }
+
+        .resend-code {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .resend-button {
+            background: none;
+            border: none;
+            color: #4285f4;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            padding: 5px 10px;
+            border-radius: 4px;
+        }
+
+        .resend-button:hover:not(:disabled) {
+            background-color: #f0f7ff;
+            text-decoration: underline;
+        }
+
+        .resend-button:disabled {
+            color: #999;
+            cursor: not-allowed;
+        }
+
+        .timer {
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        .verification-error {
+            color: #d93025;
+            margin-top: 15px;
+            text-align: center;
+            display: none;
+            font-weight: 500;
+        }
+
+        .verification-success {
+            color: #0f9d58;
+            margin-top: 15px;
+            text-align: center;
+            display: none;
+            font-weight: 500;
+        }
+
         @media (max-width: 900px) {
             .modal-body, .cart-modal-content {
                 grid-template-columns: 1fr;
@@ -1476,6 +1615,54 @@
     </div>
 </div>
 
+<!-- Модальное окно верификации -->
+<div id="verificationModal" class="verification-modal">
+    <div class="verification-modal-content">
+        <div class="verification-modal-header">
+            <h2 class="verification-modal-title"><i class="fas fa-envelope"></i> Подтверждение Email</h2>
+            <button class="verification-close-modal">&times;</button>
+        </div>
+        <div class="verification-modal-body">
+            <div class="verification-info">
+                <p>Мы отправили 6-значный код подтверждения на вашу электронную почту.</p>
+                <p>Пожалуйста, введите код ниже:</p>
+            </div>
+
+            <form id="verificationForm">
+                <div class="verification-code-container" id="codeContainer">
+                    <input type="text" class="verification-code-input" maxlength="1" data-index="0">
+                    <input type="text" class="verification-code-input" maxlength="1" data-index="1">
+                    <input type="text" class="verification-code-input" maxlength="1" data-index="2">
+                    <input type="text" class="verification-code-input" maxlength="1" data-index="3">
+                    <input type="text" class="verification-code-input" maxlength="1" data-index="4">
+                    <input type="text" class="verification-code-input" maxlength="1" data-index="5">
+                </div>
+
+                <button type="submit" class="login-submit" style="width: 100%;">
+                    <i class="fas fa-check"></i> Подтвердить
+                </button>
+
+                <div id="verificationError" class="verification-error">
+                    Неверный код подтверждения
+                </div>
+
+                <div id="verificationSuccess" class="verification-success">
+                    Email успешно подтвержден!
+                </div>
+            </form>
+
+            <div class="resend-code">
+                <button id="resendCodeButton" class="resend-button" disabled>
+                    Отправить код повторно
+                </button>
+                <div class="timer" id="resendTimer">
+                    Доступно через: <span id="timerCount">60</span> сек.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Модальное окно товара -->
 <div id="productModal" class="modal">
     <div class="modal-content">
@@ -1616,6 +1803,11 @@
     let originalProfileData = null;
     let cartItemsData = []; // Хранит состояние корзины локально
 
+    // Переменные для верификации
+    let pendingVerificationData = null;
+    let resendTimerInterval = null;
+    let resendCooldown = 60; // 60 секунд
+
     // ====================== DOM ЭЛЕМЕНТЫ ======================
     const productsContainer = document.getElementById('products-container');
     const paginationContainer = document.getElementById('pagination');
@@ -1676,6 +1868,17 @@
     const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
     const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
 
+    // Элементы для верификации
+    const verificationModal = document.getElementById('verificationModal');
+    const verificationForm = document.getElementById('verificationForm');
+    const verificationError = document.getElementById('verificationError');
+    const verificationSuccess = document.getElementById('verificationSuccess');
+    const resendCodeButton = document.getElementById('resendCodeButton');
+    const resendTimer = document.getElementById('resendTimer');
+    const timerCount = document.getElementById('timerCount');
+    const verificationCloseModal = document.querySelector('.verification-close-modal');
+    const codeInputs = document.querySelectorAll('.verification-code-input');
+
     // ====================== УТИЛИТЫ ДЛЯ РАБОТЫ С ТОКЕНАМИ ======================
 
     // Обработка очереди запросов
@@ -1700,7 +1903,7 @@
             const refreshTokenValue = data.refreshToken;
             if (!refreshTokenValue) throw new Error('No refresh token');
 
-            const response = await fetch('http://localhost:8765/auth/user/refresh', {
+            const response = await fetch('http://localhost:59783/auth/refresh', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ refreshToken: refreshTokenValue })
@@ -1857,7 +2060,7 @@
         }
 
         try {
-            const response = await fetch('http://localhost:8765/auth/user/login', {
+            const response = await fetch('http://localhost:8765/auth/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -2024,7 +2227,7 @@
         if (hasError) return;
 
         try {
-            const response = await fetch('http://localhost:8765/auth/user/register', {
+            const response = await fetch('http://localhost:11250/auth/v1/register', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -2037,26 +2240,29 @@
                 })
             });
 
-            if (response.ok) {
-                const authResponse = await response.json();
-
-                // Сохраняем весь объект авторизации
-                localStorage.setItem('authData', JSON.stringify(authResponse));
-                showUserInfo(authResponse.user);
+            if (response.status === 201) {
+                // Регистрация успешна, но требуется верификация
                 closeRegisterModal();
-                cartIcon.style.display = 'block';
-                loadCart();
-                alert(`Регистрация прошла успешно! Добро пожаловать, ${firstName}!`);
+
+                // Сохраняем данные для верификации
+                const verificationData = {
+                    email,
+                    firstName,
+                    lastName,
+                    password
+                };
+
+                // Открываем модальное окно верификации
+                openVerificationModal(verificationData);
+
+            } else if (response.status === 409) {
+                showRegisterError('Этот email уже занят. Пожалуйста, используйте другой email.');
+                highlightErrorField('registerEmail');
+                emailHint.textContent = 'Этот email уже занят!';
+                emailHint.className = 'username-hint username-error';
+                document.getElementById('registerEmail').focus();
             } else {
-                if (response.status === 409) {
-                    showRegisterError('Этот email уже занят. Пожалуйста, используйте другой email.');
-                    highlightErrorField('registerEmail');
-                    emailHint.textContent = 'Этот email уже занят!';
-                    emailHint.className = 'username-hint username-error';
-                    document.getElementById('registerEmail').focus();
-                } else {
-                    showRegisterError('Ошибка при регистрации. Пожалуйста, попробуйте снова.');
-                }
+                showRegisterError('Ошибка при регистрации. Пожалуйста, попробуйте снова.');
             }
         } catch (error) {
             showRegisterError('Ошибка подключения к серверу');
@@ -2083,6 +2289,207 @@
         setTimeout(() => {
             registerError.style.display = 'none';
         }, 5000);
+    }
+
+    // ====================== ВЕРИФИКАЦИЯ EMAIL ======================
+
+    // Функция для открытия модального окна верификации
+    function openVerificationModal(registerData) {
+        pendingVerificationData = registerData;
+        verificationModal.style.display = 'block';
+        verificationForm.reset();
+        verificationError.style.display = 'none';
+        verificationSuccess.style.display = 'none';
+
+        // Сброс и фокус на первый инпут
+        codeInputs.forEach(input => {
+            input.value = '';
+            input.classList.remove('filled');
+        });
+        codeInputs[0].focus();
+
+        // Запуск таймера для повторной отправки
+        startResendTimer();
+    }
+
+    // Функция для закрытия модального окна верификации
+    function closeVerificationModal() {
+        verificationModal.style.display = 'none';
+        if (resendTimerInterval) {
+            clearInterval(resendTimerInterval);
+            resendTimerInterval = null;
+        }
+    }
+
+    // Функция для запуска таймера повторной отправки
+    function startResendTimer() {
+        let secondsLeft = resendCooldown;
+        resendCodeButton.disabled = true;
+        resendTimer.style.display = 'block';
+
+        if (resendTimerInterval) {
+            clearInterval(resendTimerInterval);
+        }
+
+        resendTimerInterval = setInterval(() => {
+            secondsLeft--;
+            timerCount.textContent = secondsLeft;
+
+            if (secondsLeft <= 0) {
+                clearInterval(resendTimerInterval);
+                resendCodeButton.disabled = false;
+                resendTimer.style.display = 'none';
+            }
+        }, 1000);
+    }
+
+    // Функция для получения полного кода из инпутов
+    function getVerificationCode() {
+        return Array.from(codeInputs)
+            .map(input => input.value)
+            .join('');
+    }
+
+    // Обработчик ввода кода верификации
+    function handleCodeInput(e) {
+        const input = e.target;
+        const index = parseInt(input.dataset.index);
+        const value = input.value;
+
+        // Разрешаем только цифры
+        if (!/^\d*$/.test(value)) {
+            input.value = '';
+            return;
+        }
+
+        if (value !== '') {
+            input.classList.add('filled');
+
+            // Автоматический переход к следующему полю
+            if (index < codeInputs.length - 1) {
+                codeInputs[index + 1].focus();
+            }
+        } else {
+            input.classList.remove('filled');
+        }
+
+        // Обработка удаления (backspace)
+        if (e.inputType === 'deleteContentBackward' && index > 0 && value === '') {
+            codeInputs[index - 1].focus();
+        }
+    }
+
+    // Обработчик вставки кода (позволяет вставить весь код сразу)
+    function handleCodePaste(e) {
+        e.preventDefault();
+        const pastedData = e.clipboardData.getData('text');
+        const digits = pastedData.replace(/\D/g, '').split('').slice(0, 6);
+
+        digits.forEach((digit, index) => {
+            if (codeInputs[index]) {
+                codeInputs[index].value = digit;
+                codeInputs[index].classList.add('filled');
+            }
+        });
+
+        // Фокус на последнее заполненное поле или следующее пустое
+        const lastFilledIndex = digits.length - 1;
+        const nextEmptyIndex = digits.length < 6 ? digits.length : 5;
+        if (codeInputs[nextEmptyIndex]) {
+            codeInputs[nextEmptyIndex].focus();
+        }
+    }
+
+    // Обработчик подтверждения кода верификации
+    async function handleVerificationSubmit(event) {
+        event.preventDefault();
+
+        const code = getVerificationCode();
+
+        // Проверка, что код состоит из 6 цифр
+        if (code.length !== 6 || !/^\d{6}$/.test(code)) {
+            showVerificationError('Пожалуйста, введите 6-значный код');
+            return;
+        }
+
+        try {
+            const response = await fetch('http://localhost:10955/auth/v1/verify-code', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    email: pendingVerificationData.email,
+                    code: code,
+                    password: pendingVerificationData.password
+                })
+            });
+
+            if (response.ok) {
+                const authResponse = await response.json();
+
+                // Сохраняем данные аутентификации
+                localStorage.setItem('authData', JSON.stringify(authResponse));
+
+                // Показываем сообщение об успехе
+                verificationSuccess.style.display = 'block';
+                verificationError.style.display = 'none';
+
+                // Закрываем модальное окно через 2 секунды
+                setTimeout(() => {
+                    closeVerificationModal();
+                    showUserInfo(authResponse.user);
+                    cartIcon.style.display = 'block';
+                    loadCart();
+                    alert(`Email успешно подтвержден! Добро пожаловать, ${pendingVerificationData.firstName}!`);
+
+                    // Очищаем временные данные
+                    pendingVerificationData = null;
+                }, 2000);
+
+            } else {
+                const error = await response.json();
+                showVerificationError(error.message || 'Неверный код подтверждения');
+            }
+        } catch (error) {
+            showVerificationError('Ошибка подключения к серверу');
+            console.error('Ошибка верификации:', error);
+        }
+    }
+
+    // Обработчик повторной отправки кода
+    async function handleResendCode() {
+        if (resendCodeButton.disabled) return;
+
+        try {
+            const response = await fetch('http://localhost:59783/auth/v1/resend-verification-code', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    email: pendingVerificationData.email
+                })
+            });
+
+            if (response.ok) {
+                alert('Код подтверждения отправлен повторно на вашу почту');
+                startResendTimer();
+            } else {
+                const error = await response.json();
+                showVerificationError(error.message || 'Ошибка при отправке кода');
+            }
+        } catch (error) {
+            showVerificationError('Ошибка подключения к серверу');
+            console.error('Ошибка повторной отправки:', error);
+        }
+    }
+
+    // Показать ошибку верификации
+    function showVerificationError(message) {
+        verificationError.textContent = message;
+        verificationError.style.display = 'block';
+        verificationSuccess.style.display = 'none';
     }
 
     // ====================== КОРЗИНА (ОПТИМИЗИРОВАННАЯ ВЕРСИЯ) ======================
@@ -2963,6 +3370,9 @@
             if (e.target === profileModal) {
                 closeProfileModal();
             }
+            if (e.target === verificationModal) {
+                closeVerificationModal();
+            }
         });
 
         loginButton.addEventListener('click', openLoginModal);
@@ -3082,6 +3492,17 @@
 
         cancelDeleteBtn.addEventListener('click', () => {
             deleteConfirmation.style.display = 'none';
+        });
+
+        // Обработчики для верификации
+        verificationCloseModal.addEventListener('click', closeVerificationModal);
+        verificationForm.addEventListener('submit', handleVerificationSubmit);
+        resendCodeButton.addEventListener('click', handleResendCode);
+
+        // Обработчики для полей ввода кода
+        codeInputs.forEach(input => {
+            input.addEventListener('input', handleCodeInput);
+            input.addEventListener('paste', handleCodePaste);
         });
     }
 
