@@ -10,7 +10,7 @@ public class PageController {
 
     @GetMapping("/shop")
     public String shopPage() {
-        return "forward:/index_multiPage2.html";
+        return "forward:/index_multi_with_kabinet_updated.html";
     }
 
     @GetMapping("/seller")
